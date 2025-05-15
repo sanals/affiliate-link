@@ -1,0 +1,42 @@
+{
+  "name": "Amazon Affiliate Link Converter | Syrez",
+  "short_name": "Affiliate Links",
+  "description": "Convert Amazon links to your affiliate links with ease - Syrez.co.in",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Convert Link",
+      "short_name": "Convert",
+      "description": "Convert Amazon link to affiliate link",
+      "url": "/?source=pwa",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "categories": ["utilities", "productivity"]
+} 
