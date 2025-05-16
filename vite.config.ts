@@ -39,17 +39,17 @@ export default defineConfig({
         scope: '/affiliate-link/',
         icons: [
           {
-            src: '/affiliate-link/icons/icon-192x192.png',
+            src: 'icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/affiliate-link/icons/icon-512x512.png',
+            src: 'icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/affiliate-link/icons/icon-512x512.png',
+            src: 'icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
@@ -91,7 +91,7 @@ export default defineConfig({
       }
     })
   ],
-  base: '/affiliate-link/', // Updated base path for GitHub Pages
+  base: '/affiliate-link/', // Keep this as the base path for GitHub Pages
   server: {
     host: '127.0.0.1',  // Use IP instead of localhost
     port: 3000,
