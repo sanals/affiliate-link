@@ -6,8 +6,19 @@ on:
       - main  # Set this to your default branch
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow modification of GitHub Pages settings
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Ensure this doesn't run in parallel with the main deployment workflow
+concurrency:
+  group: "pages-control"
+  cancel-in-progress: false
+
 jobs:
-  disable-pages:
+  disable-default-pages:
     runs-on: ubuntu-latest
     # Skip this job if we're on the deploy-002 branch
     if: ${{ !contains(github.ref, 'deploy-002') }}
@@ -25,25 +36,24 @@ jobs:
           echo "# This site is deployed via a custom workflow" >> .github/gh-pages-config
           echo "# Please check .github/workflows/deploy.yml" >> .github/gh-pages-config
       
-      # Create a custom branch for GitHub Pages to prevent the automatic deployment   
+      # Create a custom branch specifically for GitHub Pages to prevent the automatic deployment
       - name: Create and push custom-pages-branch
         run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
           git checkout -b custom-pages-branch
+          git add .github/gh-pages-config
+          git commit -m "Create custom pages branch to disable automatic deployments"
           git push origin custom-pages-branch -f
         continue-on-error: true
-          
-      - name: Commit marker file
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Mark repository as using custom Pages deployment"
-          file_pattern: ".github/gh-pages-config"
       
-      # Configure GitHub Pages to use the custom branch rather than gh-pages  
+      # Configure GitHub Pages to use the custom branch rather than gh-pages
       - name: Configure GitHub Pages to use custom branch
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Configuring GitHub Pages to use custom-pages-branch instead of default..."
-          gh api -X PATCH repos/${{ github.repository }}/pages \
-          -f source='{"branch":"custom-pages-branch","path":"/"}'
+          curl -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" \
+            -d '{"source": {"branch":"custom-pages-branch","path":"/"}}'
         continue-on-error: true 

@@ -20,12 +20,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  setup-and-build:
-    name: Setup and Build
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      # Try to disable the automatic GitHub Pages deployment
+      - name: Disable automatic GitHub Pages deployment
+        run: |
+          echo "Attempting to disable automatic GitHub Pages deployment..."
+          curl -X DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pages"
+        continue-on-error: true
 
       # Attempt to delete gh-pages branch to avoid conflicts with the automatic deployment
       - name: Delete gh-pages branch if it exists
@@ -51,26 +64,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-files
-          path: dist
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: setup-and-build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: build-files
-          path: dist
-
       - name: Dump build directory structure
         run: |
           echo "Contents of dist directory:"
@@ -87,10 +80,11 @@ jobs:
           clean: true
           commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }}"
 
-      # Configure GitHub Pages
+      # Configure GitHub Pages (must run after deployment since we need the gh-pages branch to exist)
+      - name: Delay before configuring GitHub Pages
+        run: sleep 5
+
       - name: Configure GitHub Pages
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Setting GitHub Pages to use gh-pages branch..."
           curl -X PUT \
