@@ -8,15 +8,14 @@ on:
 
 # Ensure this doesn't run at the same time as our custom deployment
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   disable-pages:
     runs-on: ubuntu-latest
-    # This job only runs if we're not using our custom deployment workflow
-    # This prevents conflicts between the two workflows
-    if: ${{ github.event_name != 'workflow_dispatch' || github.run_number == 1 }}
+    # Only run this job if we're not using our custom deployment workflow
+    if: ${{ !contains(github.ref, 'deploy-001') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
