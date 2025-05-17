@@ -27,7 +27,8 @@ export default defineConfig({
         'robots.txt',
         'icons/apple-touch-icon.png',
         'icons/icon-192x192.png',
-        'icons/icon-512x512.png'
+        'icons/icon-512x512.png',
+        'icons/icon-1024x1024.png'
       ],
       manifest: {
         name: 'Amazon Affiliate Link Converter',
@@ -106,6 +107,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Disable source maps in production for better performance
+    assetsInlineLimit: 4096, // Files smaller than this will be inlined as base64
+    emptyOutDir: true, // Empty the output directory before building
+    copyPublicDir: true, // Copy all files from public/ to outDir/
     rollupOptions: {
       output: {
         manualChunks: {
