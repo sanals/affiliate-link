@@ -1,51 +1,32 @@
-# Syrez Amazon Affiliate Link Converter
+# Amazon Affiliate Link Converter PWA
 
-A Progressive Web App (PWA) that allows users to easily convert Amazon product links into affiliate links with your unique affiliate tag.
+![Deploy Status](https://github.com/user/repo/actions/workflows/deploy.yml/badge.svg)
 
-Live demo: [https://syrez.co.in](https://syrez.co.in)
+A Progressive Web App (PWA) built with React, TypeScript, and Material-UI that converts Amazon product links into affiliate links.
 
 ## Features
 
-- **Convert Amazon Links** to affiliate links with the tag "syrez-21"
-- **Supports Multiple Link Types**:
-  - Short links (amzn.in/d/...)
-  - Full links (amazon.in/...)
-  - Shortest links (amzn.to/...)
-- **Progressive Web App** - installable on mobile and desktop devices
-- **Responsive Design** - works on all screen sizes
-- **Dark/Light Mode** - automatic or manual theme selection
-- **Offline Support** - works without an internet connection
-- **Share Feature** - easily share affiliate links
-- **Copy to Clipboard** - one-click copy functionality
-- **Open in Amazon** - directly open the affiliate link in Amazon
-
-## Tech Stack
-
-- **React** - UI library
-- **TypeScript** - type-safe JavaScript
-- **Vite** - build tool and dev server
-- **Material UI** - UI component library
-- **PWA** - progressive web app support
-- **Service Worker** - for offline capability
+- Convert Amazon product links to affiliate links
+- Support for various Amazon link formats (full URLs, short URLs)
+- Copy affiliate links to clipboard
+- Open the affiliate link directly in Amazon
+- Installable as a PWA for offline access
+- Dark mode support
 
 ## Development
 
 ### Prerequisites
 
-- Node.js (v16+)
-- npm (v7+)
+- Node.js (v14+)
+- npm or yarn
 
-### Installation
+### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/syrez/affiliate-link.git
-cd affiliate-link
-
 # Install dependencies
 npm install
 
-# Start the development server
+# Start development server
 npm run dev
 ```
 
@@ -55,17 +36,31 @@ npm run dev
 # Build the project
 npm run build
 
-# Preview the production build
+# Preview production build
 npm run preview
 ```
 
 ## Deployment
 
-See [build-deploy.md](build-deploy.md) for detailed deployment instructions.
+The site is automatically deployed to GitHub Pages when changes are pushed to the `deploy-002` branch.
+
+## Troubleshooting
+
+If you encounter a blank page after deployment, check for the following common issues:
+
+1. **Path references**: Ensure all paths in HTML files use relative paths (`./`) instead of absolute paths (`/`).
+
+2. **Resource loading**: Open the browser console (F12) and check for 404 errors. Look for missing files like scripts, CSS, or images.
+
+3. **MIME type errors**: If you see errors like "Refused to execute script because MIME type is not executable", ensure the server is serving JavaScript files with the correct Content-Type header.
+
+4. **GitHub Pages configuration**: Make sure your GitHub Pages settings are correctly configured to use the `gh-pages` branch.
+
+5. **Use the diagnostic tool**: Click the "Check Domain" button in the bottom right corner to run diagnostics. This will log detailed information to the browser console that can help identify issues.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Author
 

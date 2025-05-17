@@ -8,6 +8,7 @@ import {
   Alert, 
   Snackbar, 
   CircularProgress,
+  LinearProgress,
   useTheme,
   useMediaQuery
 } from '@mui/material';
@@ -40,7 +41,7 @@ const LinkConverterCard = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputUrl(e.target.value);
-    setError(null);
+    if (error) setError(null);
   };
 
   const handleConvertClick = async () => {
@@ -69,9 +70,16 @@ const LinkConverterCard = () => {
       // Now convert the link
       const result = generateAffiliateLink(urlToConvert);
       setAffiliateUrl(result);
-      setIsLoading(false);
+      
+      // Show success notification
+      setNotification({
+        open: true,
+        message: 'Link converted successfully!',
+        severity: 'success',
+      });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to convert link');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -125,9 +133,22 @@ const LinkConverterCard = () => {
         maxWidth: '600px', 
         width: '100%',
         mx: 'auto',
-        mt: 2
+        mt: 2,
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
+      {isLoading && (
+        <LinearProgress 
+          sx={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            right: 0 
+          }} 
+        />
+      )}
+      
       <Typography variant="h5" component="h1" gutterBottom align="center">
         Syrez Amazon Affiliate Tool
       </Typography>

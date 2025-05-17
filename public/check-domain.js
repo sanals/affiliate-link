@@ -11,11 +11,31 @@
     supportsFetch: 'fetch' in window,
     supportsServiceWorker: 'serviceWorker' in navigator,
     serviceWorkerRegistration: null,
+    scriptErrors: [],
     resources: {
       loaded: [],
       failed: []
     }
   };
+
+  // Track script errors
+  window.addEventListener('error', function(event) {
+    if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
+      report.scriptErrors.push({
+        tagName: event.target.tagName,
+        src: event.target.src || event.target.href,
+        error: event.message || 'Failed to load resource'
+      });
+    } else {
+      report.scriptErrors.push({
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      });
+    }
+    updateConsoleOutput();
+  }, true);
 
   // Check service worker registration
   if (report.supportsServiceWorker) {
@@ -35,11 +55,13 @@
 
   // Check resource loading
   const resourcesToCheck = [
-    '/favicon.ico',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    '/manifest.json',
-    '/sw.js'
+    './favicon.ico',
+    './icons/icon-192x192.png',
+    './icons/icon-512x512.png',
+    './manifest.json',
+    './sw.js',
+    './assets/index.js',
+    './assets/vendor.js'
   ];
 
   Promise.all(resourcesToCheck.map(resource => {
@@ -78,6 +100,11 @@
     } else {
       console.log('%c ✅ All resources loaded successfully!', 'font-size: 14px; font-weight: bold; color: #388e3c;');
     }
+    
+    if (report.scriptErrors.length > 0) {
+      console.log('%c ❌ Script Errors:', 'font-size: 14px; font-weight: bold; color: #d32f2f;');
+      console.table(report.scriptErrors);
+    }
   }
 
   // Create a button to show diagnostics
@@ -102,5 +129,6 @@
   
   window.addEventListener('load', () => {
     document.body.appendChild(button);
+    updateConsoleOutput();
   });
 })(); 

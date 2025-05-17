@@ -25,6 +25,11 @@
     // Otherwise, leave pathSegmentsToKeep as 0.
     var pathSegmentsToKeep = 0;
 
+    // For custom domains using GitHub Pages
+    if (window.location.hostname === 'syrez.co.in') {
+      pathSegmentsToKeep = 0;
+    }
+
     var l = window.location;
     l.replace(
       l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +

@@ -20,16 +20,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  setup-and-build:
+    name: Setup and Build
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      # Attempt to delete gh-pages branch to avoid conflicts with the automatic deployment
+      - name: Delete gh-pages branch if it exists
+        run: |
+          git fetch origin
+          if git ls-remote --heads origin gh-pages | grep -q 'gh-pages'; then
+            git push origin --delete gh-pages || true
+            echo "Removed gh-pages branch to avoid conflicts"
+          else
+            echo "No gh-pages branch found to delete"
+          fi
+        continue-on-error: true
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -41,19 +51,51 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Copy CNAME file
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: setup-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-files
+          path: dist
+
+      - name: Dump build directory structure
         run: |
-          if [ -f "CNAME" ]; then
-            cp CNAME dist/
-            echo "Copied CNAME file to dist/"
-          else
-            echo "syrez.co.in" > dist/CNAME
-            echo "Created CNAME file with syrez.co.in in dist/"
-          fi
+          echo "Contents of dist directory:"
+          ls -la dist
+          echo "Contents of dist/icons directory:"
+          ls -la dist/icons || echo "No icons directory found"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
+        id: deployment
         with:
-          folder: dist  # The folder the action should deploy
-          branch: gh-pages  # The branch the action should deploy to
-          clean: true  # Automatically remove deleted files from the deploy branch
+          folder: dist
+          branch: gh-pages
+          clean: true
+          commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }}"
+
+      # Configure GitHub Pages
+      - name: Configure GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Setting GitHub Pages to use gh-pages branch..."
+          curl -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pages" \
+            -d '{"source": {"branch": "gh-pages", "path": "/"}}'
+        continue-on-error: true

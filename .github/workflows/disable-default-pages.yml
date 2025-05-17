@@ -19,13 +19,31 @@ jobs:
         # This is a dummy step to create a marker file 
         # indicating we're using custom deployment
         run: |
+          mkdir -p .github
           touch .github/gh-pages-config
           echo "# Custom GitHub Pages Deployment" > .github/gh-pages-config
           echo "# This site is deployed via a custom workflow" >> .github/gh-pages-config
           echo "# Please check .github/workflows/deploy.yml" >> .github/gh-pages-config
+      
+      # Create a custom branch for GitHub Pages to prevent the automatic deployment   
+      - name: Create and push custom-pages-branch
+        run: |
+          git checkout -b custom-pages-branch
+          git push origin custom-pages-branch -f
+        continue-on-error: true
           
       - name: Commit marker file
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Mark repository as using custom Pages deployment"
-          file_pattern: ".github/gh-pages-config" 
+          file_pattern: ".github/gh-pages-config"
+      
+      # Configure GitHub Pages to use the custom branch rather than gh-pages  
+      - name: Configure GitHub Pages to use custom branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Configuring GitHub Pages to use custom-pages-branch instead of default..."
+          gh api -X PATCH repos/${{ github.repository }}/pages \
+          -f source='{"branch":"custom-pages-branch","path":"/"}'
+        continue-on-error: true 

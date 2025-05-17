@@ -12,6 +12,8 @@ import LinkConverterCard from './components/LinkConverterCard';
 import createAppTheme from './theme';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ServiceWorkerUpdate from './components/ServiceWorkerUpdate';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App = () => {
   // Theme state setup
@@ -40,22 +42,25 @@ const App = () => {
   const theme = createAppTheme(mode);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          minHeight: '100vh'
-        }}
-      >
-        <Header toggleTheme={toggleThemeMode} />
-        <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
-          <LinkConverterCard />
-        </Container>
-        <Footer />
-      </Box>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            minHeight: '100vh'
+          }}
+        >
+          <Header toggleTheme={toggleThemeMode} />
+          <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
+            <LinkConverterCard />
+          </Container>
+          <Footer />
+          <ServiceWorkerUpdate />
+        </Box>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
