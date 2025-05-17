@@ -13,6 +13,7 @@ permissions:
   pages: write
   id-token: write
   deployments: write
+  actions: write
 
 # Cancel any in-progress job or run
 concurrency:
@@ -26,6 +27,17 @@ jobs:
     steps:
       - name: Disable GitHub Pages
         run: |
+          # Disable GitHub Pages in repository settings
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }} \
+            -d '{"has_pages":false}'
+          
+          # Wait a moment for the settings to take effect
+          sleep 5
+          
+          # Re-enable GitHub Pages with workflow deployment
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
