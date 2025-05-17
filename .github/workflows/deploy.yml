@@ -21,6 +21,8 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Skip if triggered by GitHub Pages
+    if: ${{ !contains(github.event.head_commit.message, '[pages build]') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -85,4 +87,4 @@ jobs:
           folder: dist  # The folder the action should deploy
           branch: gh-pages  # The branch the action should deploy to
           clean: true  # Automatically remove deleted files from the deploy branch
-          commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }}"
+          commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }} [pages build]"

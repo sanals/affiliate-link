@@ -15,7 +15,8 @@ jobs:
   disable-pages:
     runs-on: ubuntu-latest
     # Only run this job if we're not using our custom deployment workflow
-    if: ${{ !contains(github.ref, 'deploy-001') }}
+    # and if the commit wasn't made by GitHub Pages
+    if: ${{ !contains(github.ref, 'deploy-001') && !contains(github.event.head_commit.message, '[pages build]') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -33,5 +34,5 @@ jobs:
       - name: Commit marker file
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Mark repository as using custom Pages deployment"
+          commit_message: "Mark repository as using custom Pages deployment [pages build]"
           file_pattern: ".github/gh-pages-config" 
