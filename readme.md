@@ -28,7 +28,7 @@ npm run preview
 
 ## Deployment to GitHub Pages
 
-This app is configured to deploy to GitHub Pages with a custom domain. The deployment process ensures all asset paths use relative URLs (starting with `./`) rather than absolute paths, which is crucial for proper functioning with a custom domain.
+This app is configured to deploy to GitHub Pages. The deployment process ensures all asset paths use relative URLs (starting with `./`) rather than absolute paths, which is crucial for proper functioning.
 
 ### Automatic Deployment
 
@@ -36,7 +36,7 @@ Push to the `deploy-002` branch to trigger the GitHub Actions workflow that will
 
 1. Build the application
 2. Process all paths to ensure they're relative
-3. Add necessary files (CNAME, .nojekyll)
+3. Add necessary files (.nojekyll)
 4. Deploy to the gh-pages branch
 
 ### Manual Deployment
@@ -53,8 +53,22 @@ If you encounter blank pages after deployment:
 
 1. Check that all asset paths in the HTML files use relative paths (`./`) rather than absolute paths (`/`)
 2. Ensure the `.nojekyll` file exists in the root of your deployed site
-3. Verify the CNAME file contains the correct domain
-4. Clear browser cache and service workers: In Chrome DevTools → Application → Clear storage
+3. Clear browser cache and service workers: In Chrome DevTools → Application → Clear storage
+
+## Using a Custom Domain (Optional)
+
+To use a custom domain with this deployment:
+
+1. Uncomment the CNAME-related code in `scripts/post-build.js`
+2. Uncomment the CNAME verification in `.github/workflows/deploy.yml`
+3. Create a `CNAME` file in the root with your domain name
+4. Update your DNS settings to point to GitHub Pages
+
+To revert git changes for these files:
+```bash
+git checkout HEAD -- scripts/post-build.js
+git checkout HEAD -- .github/workflows/deploy.yml
+```
 
 ## Notes on Path Management
 
@@ -64,7 +78,7 @@ This project includes a special `post-build.js` script that automatically conver
 - GitHub Pages paths (`/[repo-name]/assets/...`) to relative paths (`./assets/...`)
 - Base64-encoded manifest data that contains absolute path references
 
-This ensures that the app works correctly when deployed to GitHub Pages with a custom domain.
+This ensures that the app works correctly when deployed to GitHub Pages.
 
 ## License
 

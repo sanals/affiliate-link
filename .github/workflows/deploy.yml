@@ -95,10 +95,11 @@ jobs:
             echo "Creating .nojekyll in dist directory"
             touch dist/.nojekyll
           fi
-          if [ ! -f "dist/CNAME" ]; then
-            echo "Creating CNAME in dist directory"
-            echo "syrez.co.in" > dist/CNAME
-          fi
+          # We're no longer using a custom domain, so we don't need to check for CNAME
+          # if [ ! -f "dist/CNAME" ]; then
+          #   echo "Creating CNAME in dist directory"
+          #   echo "syrez.co.in" > dist/CNAME
+          # fi
           
           # Check if index.html has proper relative paths
           if grep -q 'src="/' dist/index.html; then
@@ -158,4 +159,4 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Deployment completed. GitHub Pages should now be serving content from the gh-pages branch."
-          echo "Custom domain is configured to: $(cat dist/CNAME)"
+          echo "Visit your GitHub Pages site at: https://$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]').github.io/$(echo ${{ github.repository }} | cut -d'/' -f2)"

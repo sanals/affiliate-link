@@ -16,13 +16,15 @@ console.log('✅ Created .nojekyll file');
 
 // Copy CNAME file if it exists in the root
 if (fs.existsSync(path.resolve(__dirname, '../CNAME'))) {
-  const cname = fs.readFileSync(path.resolve(__dirname, '../CNAME'), 'utf8');
-  fs.writeFileSync(path.join(distDir, 'CNAME'), cname);
-  console.log(`✅ Copied CNAME file: ${cname.trim()}`);
+  // Comment out the CNAME file handling - we're no longer using a custom domain
+  // const cname = fs.readFileSync(path.resolve(__dirname, '../CNAME'), 'utf8');
+  // fs.writeFileSync(path.join(distDir, 'CNAME'), cname);
+  // console.log(`✅ Copied CNAME file: ${cname.trim()}`);
+  console.log('ℹ️ CNAME file exists but not copied - deploying to GitHub Pages directly');
 } else {
-  // Create a CNAME file with syrez.co.in
-  fs.writeFileSync(path.join(distDir, 'CNAME'), 'syrez.co.in');
-  console.log('✅ Created CNAME file with syrez.co.in');
+  // Don't create a CNAME file - we're using standard GitHub Pages
+  // fs.writeFileSync(path.join(distDir, 'CNAME'), 'syrez.co.in');
+  console.log('ℹ️ No CNAME file - deploying to GitHub Pages directly');
 }
 
 // Ensure manifest.json has correct paths
