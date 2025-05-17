@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   Box, 
   TextField, 
@@ -8,8 +8,10 @@ import {
   Alert, 
   Snackbar, 
   CircularProgress,
+  LinearProgress,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Fade
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -23,6 +25,18 @@ interface NotificationState {
   message: string;
   severity: 'success' | 'error' | 'info';
 }
+
+// Debounce helper function
+const debounce = <T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 const LinkConverterCard = () => {
   const theme = useTheme();
@@ -38,9 +52,19 @@ const LinkConverterCard = () => {
     severity: 'success',
   });
 
+  // Debounced input change handler
+  const debouncedInputChange = useCallback(
+    debounce((value: string) => {
+      setInputUrl(value);
+      setError(null);
+    }, 300),
+    []
+  );
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputUrl(e.target.value);
-    setError(null);
+    // Update the input field immediately for responsiveness
+    e.target.value = e.target.value.trim();
+    debouncedInputChange(e.target.value);
   };
 
   const handleConvertClick = async () => {
@@ -125,14 +149,30 @@ const LinkConverterCard = () => {
         maxWidth: '600px', 
         width: '100%',
         mx: 'auto',
-        mt: 2
+        mt: 2,
+        position: 'relative'
       }}
+      role="main"
+      aria-label="Amazon Affiliate Link Converter"
     >
+      {isLoading && (
+        <LinearProgress 
+          sx={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            borderTopLeftRadius: 4,
+            borderTopRightRadius: 4
+          }}
+        />
+      )}
+      
       <Typography variant="h5" component="h1" gutterBottom align="center">
         Syrez Amazon Affiliate Tool
       </Typography>
       
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3 }} component="form" role="form">
         <TextField
           fullWidth
           label="Paste Amazon Link"
@@ -145,7 +185,25 @@ const LinkConverterCard = () => {
           helperText={error || ''}
           disabled={isLoading}
           sx={{ mb: 2 }}
+          inputProps={{
+            'aria-label': 'Amazon product link',
+            'aria-describedby': error ? 'url-error-text' : undefined
+          }}
+          id="amazon-url-input"
         />
+        
+        {error && (
+          <Fade in={!!error}>
+            <Typography 
+              id="url-error-text" 
+              color="error" 
+              role="alert" 
+              sx={{ mb: 2 }}
+            >
+              {error}
+            </Typography>
+          </Fade>
+        )}
         
         <Button
           fullWidth
@@ -154,85 +212,102 @@ const LinkConverterCard = () => {
           onClick={handleConvertClick}
           disabled={!inputUrl.trim() || isLoading}
           startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SwapHorizIcon />}
-          sx={{ py: 1.2 }}
+          sx={{ 
+            py: 1.2,
+            position: 'relative',
+            '&.Mui-disabled': {
+              backgroundColor: theme.palette.action.disabledBackground,
+              color: theme.palette.action.disabled
+            }
+          }}
+          aria-label={isLoading ? 'Converting link...' : 'Convert link'}
         >
           {isLoading ? 'Converting...' : 'Convert Link'}
         </Button>
       </Box>
       
-      {affiliateUrl && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="subtitle1" gutterBottom fontWeight="medium">
-            Affiliate Link:
-          </Typography>
-          
-          <TextField
-            fullWidth
-            variant="outlined"
-            value={affiliateUrl}
-            InputProps={{
-              readOnly: true,
-            }}
-            sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                bgcolor: theme.palette.action.hover,
-              }
-            }}
-          />
-          
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              flexDirection: isMobile ? 'column' : 'row',
-              mt: 2 
-            }}
-          >
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleCopyClick}
-              startIcon={<ContentCopyIcon />}
-              fullWidth
-            >
-              Copy Link
-            </Button>
+      <Fade in={!!affiliateUrl}>
+        {affiliateUrl ? (
+          <Box sx={{ mt: 4 }} role="region" aria-label="Generated affiliate link">
+            <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+              Affiliate Link:
+            </Typography>
             
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleOpenClick}
-              startIcon={<OpenInNewIcon />}
+            <TextField
               fullWidth
-            >
-              Open in Amazon
-            </Button>
-          </Box>
-          
-          <Box sx={{ mt: 2 }}>
-            <Button
               variant="outlined"
-              color="inherit"
-              onClick={handleClearClick}
-              startIcon={<ClearIcon />}
-              fullWidth
+              value={affiliateUrl}
+              InputProps={{
+                readOnly: true,
+                'aria-label': 'Generated affiliate link'
+              }}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: theme.palette.action.hover,
+                }
+              }}
+            />
+            
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                flexDirection: isMobile ? 'column' : 'row',
+                mt: 2 
+              }}
             >
-              Clear
-            </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleCopyClick}
+                startIcon={<ContentCopyIcon />}
+                fullWidth
+                aria-label="Copy affiliate link to clipboard"
+              >
+                Copy Link
+              </Button>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpenClick}
+                startIcon={<OpenInNewIcon />}
+                fullWidth
+                aria-label="Open affiliate link in Amazon"
+              >
+                Open in Amazon
+              </Button>
+            </Box>
+            
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={handleClearClick}
+                startIcon={<ClearIcon />}
+                fullWidth
+                aria-label="Clear all fields"
+              >
+                Clear
+              </Button>
+            </Box>
           </Box>
-        </Box>
-      )}
+        ) : <Box />}
+      </Fade>
       
       <Snackbar 
         open={notification.open} 
         autoHideDuration={3000} 
         onClose={handleCloseNotification}
+        TransitionComponent={Fade}
       >
         <Alert 
           onClose={handleCloseNotification} 
           severity={notification.severity}
           sx={{ width: '100%' }}
+          role="alert"
+          variant="filled"
         >
           {notification.message}
         </Alert>

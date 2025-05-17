@@ -2,6 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
@@ -31,9 +35,10 @@
     
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
+    <!-- Optimized Google Fonts loading -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap&font-display=swap"
     />
     <title>Amazon Affiliate Link Converter | Syrez</title>
     
@@ -63,7 +68,10 @@
     <!-- End Single Page Apps for GitHub Pages -->
     
     <!-- Domain Diagnostics Tool - Only for development/troubleshooting -->
-    <script src="/check-domain.js"></script>
+    <script type="module">
+      import { runDiagnostics } from '/check-domain.js';
+      // Diagnostics will run automatically when the module loads
+    </script>
   </head>
   <body>
     <div id="root"></div>

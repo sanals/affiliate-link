@@ -52,6 +52,43 @@ const ensurePwaAssets = () => {
         fs.writeFileSync(cnameDest, 'syrez.co.in');
         console.log('Created CNAME file with syrez.co.in');
       }
+
+      // Create _headers file for Netlify/CDN to set correct MIME types
+      const headersContent = `/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://amazon.in https://amzn.in https://amzn.to;
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+/*.js
+  Content-Type: application/javascript
+
+/*.mjs
+  Content-Type: application/javascript
+
+/*.css
+  Content-Type: text/css
+
+/*.png
+  Content-Type: image/png
+
+/*.ico
+  Content-Type: image/x-icon
+
+/*.svg
+  Content-Type: image/svg+xml
+
+/manifest.json
+  Content-Type: application/json
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+`;
+      fs.writeFileSync(path.join(distDir, '_headers'), headersContent);
+      console.log('Created _headers file for MIME types and security headers');
     }
   };
 };
@@ -81,7 +118,8 @@ export default defineConfig({
         'icons/icon-512x512.png',
         'icons/icon-1024x1024.png',
         '404.html',
-        'CNAME'
+        'CNAME',
+        '_headers'
       ],
       manifest: {
         name: 'Amazon Affiliate Link Converter',
@@ -111,7 +149,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,webmanifest}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -165,6 +203,10 @@ export default defineConfig({
     emptyOutDir: true, // Empty the output directory before building
     copyPublicDir: true, // Copy all files from public/ to outDir/
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        diagnostics: resolve(__dirname, 'public/check-domain.js')
+      },
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', '@mui/material']
