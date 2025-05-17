@@ -4,6 +4,15 @@ A Progressive Web App (PWA) that allows users to easily convert Amazon product l
 
 Live demo: [https://syrez.co.in](https://syrez.co.in)
 
+## How to Disable GitHub Pages Automatic Deployments
+
+If you're experiencing issues with GitHub Pages automatic deployments and the "pages-build-deployment" workflow running alongside your custom workflow, here's how to completely disable it:
+
+1. Go to your repository Settings
+2. Navigate to Pages in the sidebar
+3. Under "Build and deployment", set the Source to "None" using the dropdown
+4. This will completely disable GitHub Pages and prevent the automatic workflow from running
+
 ## Features
 
 - **Convert Amazon Links** to affiliate links with the tag "syrez-21"
