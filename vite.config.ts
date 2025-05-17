@@ -34,9 +34,9 @@ export default defineConfig({
         short_name: 'Affiliate Links',
         description: 'Convert Amazon links to affiliate links with ease',
         theme_color: '#1976d2',
-        start_url: '/affiliate-link/',
+        start_url: '/',
         display: 'standalone',
-        scope: '/affiliate-link/',
+        scope: '/',
         icons: [
           {
             src: 'icons/icon-192x192.png',
@@ -91,7 +91,7 @@ export default defineConfig({
       }
     })
   ],
-  base: '/affiliate-link/', // Keep this as the base path for GitHub Pages
+  base: '/', // Changed for custom domain deployment
   server: {
     host: '127.0.0.1',  // Use IP instead of localhost
     port: 3000,

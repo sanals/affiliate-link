@@ -22,10 +22,12 @@ if (isProd && 'serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
         await registration.unregister();
+        console.log('Old ServiceWorker unregistered');
       }
       
-      // Register the service worker
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      // Register the service worker with correct path
+      const swUrl = `${window.location.origin}/sw.js`;
+      const registration = await navigator.serviceWorker.register(swUrl, {
         scope: '/'
       });
       
