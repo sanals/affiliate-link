@@ -25,6 +25,21 @@ jobs:
   disable-pages:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history so we can delete branches
+
+      - name: Delete gh-pages branch if it exists
+        run: |
+          # Check if gh-pages branch exists and delete it
+          if git ls-remote --heads origin gh-pages | grep -q 'gh-pages'; then
+            echo "Removing gh-pages branch to prevent automatic GitHub Pages deployments"
+            git push origin --delete gh-pages || echo "Failed to delete branch, but continuing"
+          else
+            echo "No gh-pages branch found, skipping deletion"
+          fi
+
       - name: Disable GitHub Pages
         run: |
           # Disable GitHub Pages in repository settings
