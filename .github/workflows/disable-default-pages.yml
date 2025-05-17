@@ -9,6 +9,8 @@ on:
 jobs:
   disable-pages:
     runs-on: ubuntu-latest
+    # Skip this job if we're on the deploy-002 branch
+    if: ${{ !contains(github.ref, 'deploy-002') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
