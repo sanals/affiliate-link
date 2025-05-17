@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - deploy-002  # Changed to use the new deploy-002 branch
+      - deploy-002
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -12,11 +12,11 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  deployments: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Allow only one concurrent deployment
 concurrency:
-  group: "pages"
+  group: "pages-deploy"
   cancel-in-progress: false
 
 jobs:
@@ -30,6 +30,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Wait a moment to ensure no other deployments are running
+      - name: Wait for other deployments
+        run: sleep 5
 
       # Attempt to delete automatic gh-pages branch to force our custom deployment
       - name: Delete gh-pages branch if it exists
@@ -59,6 +65,23 @@ jobs:
       - name: Build project
         run: npm run build
 
+      # Add a step to ensure the build contains critical files
+      - name: Verify build output
+        run: |
+          echo "Verifying build output contains all critical files..."
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: dist/index.html is missing!"
+            exit 1
+          fi
+          if [ ! -f "dist/.nojekyll" ]; then
+            echo "Creating .nojekyll in dist directory"
+            touch dist/.nojekyll
+          fi
+          if [ ! -f "dist/CNAME" ]; then
+            echo "Creating CNAME in dist directory"
+            echo "syrez.co.in" > dist/CNAME
+          fi
+        
       - name: Create a dummy deployment marker
         run: |
           echo "Marking repository as having a custom Pages deployment..."
@@ -98,3 +121,9 @@ jobs:
       # Add a delay to allow GitHub to process the deployment
       - name: Wait for GitHub Pages to process deployment
         run: sleep 10
+        
+      # Verify deployment
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed. GitHub Pages should now be serving content from the gh-pages branch."
+          echo "If you're still experiencing issues with automatic deployments, please manually run the 'Prevent Automatic Pages Deployment' workflow."

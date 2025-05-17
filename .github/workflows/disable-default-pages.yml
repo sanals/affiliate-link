@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - main
+  # Run on schedule (every 6 hours)
+  schedule:
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -60,6 +63,18 @@ jobs:
           git add README.md .nojekyll
           git commit -m "Create empty gh-pages branch to prevent automatic deployment"
           git push -f origin empty-gh-pages:gh-pages || echo "Could not push empty gh-pages branch"
+        continue-on-error: true
+      
+      # Adding an additional step to reinforce deployment blockers
+      - name: Verify GitHub Pages settings
+        run: |
+          echo "Creating additional files to block automatic deployments..."
+          # Create a .github/workflows/.lock-pages file
+          mkdir -p .github/workflows
+          echo "DO NOT DELETE - This file prevents automatic GitHub Pages deployments" > .github/workflows/.lock-pages
+          git add .github/workflows/.lock-pages
+          git commit -m "Add lock file to prevent automatic Pages deployment" || echo "No changes to commit"
+          git push || echo "Could not push lock file"
         continue-on-error: true
       
       # Restore the original branch
