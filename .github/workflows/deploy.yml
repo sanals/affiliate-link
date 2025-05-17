@@ -62,8 +62,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Ensure our post-build script is executable
+      - name: Ensure post-build script is executable
+        run: chmod +x scripts/post-build.js
+
       - name: Build project
         run: npm run build
+
+      # Add a step to verify paths in built files
+      - name: Check for absolute paths in critical files
+        run: |
+          echo "Checking for absolute paths in built files..."
+          ABSOLUTE_PATHS=$(grep -r -l 'src="/' dist/ || true)
+          if [ -n "$ABSOLUTE_PATHS" ]; then
+            echo "WARNING: Found absolute paths in the following files:"
+            echo "$ABSOLUTE_PATHS"
+            echo "Running post-build script again to fix paths..."
+            node scripts/post-build.js
+          else
+            echo "✅ No absolute paths found in built files."
+          fi
 
       # Add a step to ensure the build contains critical files
       - name: Verify build output
@@ -80,6 +98,13 @@ jobs:
           if [ ! -f "dist/CNAME" ]; then
             echo "Creating CNAME in dist directory"
             echo "syrez.co.in" > dist/CNAME
+          fi
+          
+          # Check if index.html has proper relative paths
+          if grep -q 'src="/' dist/index.html; then
+            echo "ERROR: dist/index.html contains absolute paths!"
+            echo "Running post-build script again to fix paths..."
+            node scripts/post-build.js
           fi
         
       - name: Create a dummy deployment marker
@@ -101,8 +126,15 @@ jobs:
         run: |
           echo "Contents of dist directory:"
           ls -la dist
+          echo "Contents of dist/assets directory:"
+          ls -la dist/assets || echo "No assets directory found"
           echo "Contents of dist/icons directory (if exists):"
           ls -la dist/icons || echo "No icons directory found"
+          
+          # Sample the built index.html to verify correct paths
+          echo "Checking paths in index.html:"
+          grep -o 'src="[^"]*"' dist/index.html || echo "No src attributes found"
+          grep -o 'href="[^"]*"' dist/index.html | grep -v 'https://' || echo "No local href attributes found"
 
       # Deploy to gh-pages branch using the JamesIves action
       - name: Deploy to GitHub Pages
@@ -126,4 +158,4 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Deployment completed. GitHub Pages should now be serving content from the gh-pages branch."
-          echo "If you're still experiencing issues with automatic deployments, please manually run the 'Prevent Automatic Pages Deployment' workflow."
+          echo "Custom domain is configured to: $(cat dist/CNAME)"
