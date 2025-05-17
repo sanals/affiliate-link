@@ -7,26 +7,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
+# Build outputs
 node_modules
-.pnp
-.pnp.js
-
-# Build output
 dist
 dist-ssr
 *.local
+dev-dist
 build
-out
-
-# Testing
-coverage
-.nyc_output
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
@@ -35,10 +26,20 @@ coverage
 *.sln
 *.sw?
 
-# Environment variables
+# Environment files
 .env
 .env.*
 !.env.example
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.history
+
+# Testing
+coverage
+.nyc_output
 
 # Cursor specific files
 .cursor
@@ -46,8 +47,6 @@ coverage
 
 # Misc
 .cache
-.eslintcache
-.npm
 .yarn-integrity
 .vercel
 .netlify 

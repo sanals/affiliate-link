@@ -1,0 +1,23 @@
+# Custom GitHub Pages Deployment Configuration
+
+This repository uses a custom deployment workflow for GitHub Pages.
+
+- Deployment workflow: .github/workflows/deploy.yml
+- Source branch: deploy-002
+- Deployment branch: gh-pages
+
+Do not modify the GitHub Pages settings through the repository settings page.
+All changes to the deployment process should be made through the workflow files.
+
+## How it works
+
+1. The source code is pushed to the `deploy-002` branch
+2. The GitHub Actions workflow builds the project
+3. The built files are deployed to the `gh-pages` branch
+4. GitHub Pages serves the content from the `gh-pages` branch
+
+## Preventing automatic deployments
+
+The `.github/workflows/disable-default-pages.yml` workflow prevents GitHub
+from automatically building and deploying the site when commits are pushed.
+This is necessary because we want to use our custom build process instead. 

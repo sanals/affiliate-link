@@ -1,59 +1,69 @@
-name: Disable Default Pages Deployment
+name: Prevent Automatic Pages Deployment
 
 on:
+  # Run on all pushes to main or when manually triggered
   push:
     branches:
-      - main  # Set this to your default branch
+      - main
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow modification of GitHub Pages settings
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: write
   pages: write
   id-token: write
 
-# Ensure this doesn't run in parallel with the main deployment workflow
+# We don't want this running at the same time as our primary deployment
 concurrency:
-  group: "pages-control"
+  group: "prevent-auto-pages"
   cancel-in-progress: false
 
 jobs:
-  disable-default-pages:
+  prevent-auto-deployment:
     runs-on: ubuntu-latest
-    # Skip this job if we're on the deploy-002 branch
+    # Skip this job if we're on the deployment branch
     if: ${{ !contains(github.ref, 'deploy-002') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch complete history
       
-      - name: Create empty gh-pages-config file
-        # This is a dummy step to create a marker file 
-        # indicating we're using custom deployment
+      # Create .nojekyll file in the root to prevent Jekyll processing
+      - name: Create .nojekyll file
         run: |
-          mkdir -p .github
-          touch .github/gh-pages-config
-          echo "# Custom GitHub Pages Deployment" > .github/gh-pages-config
-          echo "# This site is deployed via a custom workflow" >> .github/gh-pages-config
-          echo "# Please check .github/workflows/deploy.yml" >> .github/gh-pages-config
-      
-      # Create a custom branch specifically for GitHub Pages to prevent the automatic deployment
-      - name: Create and push custom-pages-branch
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git checkout -b custom-pages-branch
-          git add .github/gh-pages-config
-          git commit -m "Create custom pages branch to disable automatic deployments"
-          git push origin custom-pages-branch -f
+          touch .nojekyll
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add .nojekyll
+          git commit -m "Add .nojekyll file to prevent default Pages processing" || echo "No changes to commit"
+          git push || echo "Could not push .nojekyll file"
         continue-on-error: true
       
-      # Configure GitHub Pages to use the custom branch rather than gh-pages
-      - name: Configure GitHub Pages to use custom branch
+      # Force-create an empty gh-pages branch to prevent GitHub from auto-building
+      - name: Create empty gh-pages branch
         run: |
-          echo "Configuring GitHub Pages to use custom-pages-branch instead of default..."
-          curl -X PUT \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/pages" \
-            -d '{"source": {"branch":"custom-pages-branch","path":"/"}}'
+          # Try to delete an existing gh-pages branch first
+          git push origin --delete gh-pages || echo "No gh-pages branch to delete"
+          
+          # Create an empty orphan branch
+          git checkout --orphan empty-gh-pages
+          git rm -rf .
+          touch README.md
+          echo "# Custom Deployment" > README.md
+          echo "This branch is intentionally kept empty." >> README.md
+          echo "The site is deployed via a custom GitHub Action workflow." >> README.md
+          echo "See the deploy-002 branch for the source code." >> README.md
+          touch .nojekyll  # Prevent Jekyll processing
+          
+          # Add, commit, and push the empty branch
+          git add README.md .nojekyll
+          git commit -m "Create empty gh-pages branch to prevent automatic deployment"
+          git push -f origin empty-gh-pages:gh-pages || echo "Could not push empty gh-pages branch"
+        continue-on-error: true
+      
+      # Restore the original branch
+      - name: Restore original branch
+        run: |
+          git checkout ${{ github.ref_name }} || git checkout main
         continue-on-error: true 
