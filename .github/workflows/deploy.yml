@@ -43,6 +43,25 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pages \
             -d '{"source":{"branch":"gh-pages","path":"/"},"cname":"syrez.co.in","build_type":"workflow"}'
+          
+          # Check for and cancel any running pages-build-deployment workflows
+          echo "Checking for running pages-build-deployment workflows..."
+          PAGE_BUILD_RUNS=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=in_progress&event=page_build")
+          
+          echo "$PAGE_BUILD_RUNS" | grep -q '"total_count": 0' || {
+            echo "Found running page build workflows. Attempting to cancel..."
+            RUN_IDS=$(echo "$PAGE_BUILD_RUNS" | grep -o '"id": [0-9]*' | grep -o '[0-9]*')
+            for RUN_ID in $RUN_IDS; do
+              echo "Cancelling workflow run $RUN_ID"
+              curl -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/cancel"
+            done
+          }
 
   build-and-deploy:
     runs-on: ubuntu-latest
