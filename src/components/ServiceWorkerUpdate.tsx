@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Snackbar, Button, Alert } from '@mui/material';
-import { useRegisterSW, RegisterSWOptions } from 'virtual:pwa-register/react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const ServiceWorkerUpdate = () => {
   const [showReload, setShowReload] = useState(false);
