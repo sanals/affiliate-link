@@ -42,7 +42,7 @@ jobs:
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pages \
-            -d '{"source":{"branch":"gh-pages","path":"/"},"cname":"syrez.co.in","build_type":"workflow"}'
+            -d '{"source":{"branch":"custom-pages-branch","path":"/"},"cname":"syrez.co.in","build_type":"workflow"}'
           
           # Check for and cancel any running pages-build-deployment workflows
           echo "Checking for running pages-build-deployment workflows..."
@@ -130,6 +130,6 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist  # The folder the action should deploy
-          branch: gh-pages  # The branch the action should deploy to
+          branch: custom-pages-branch  # Use a different branch name to avoid triggering GitHub Pages automatically
           clean: true  # Automatically remove deleted files from the deploy branch
           commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }} [pages build]"
