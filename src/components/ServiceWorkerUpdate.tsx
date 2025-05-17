@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Snackbar, Button, Alert } from '@mui/material';
-import { useRegisterSW } from 'virtual:pwa-register/react';
-
-interface RegisterSWOptions {
-  onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;
-  onRegisterError?: (error: Error) => void;
-}
+import { useRegisterSW, RegisterSWOptions } from 'virtual:pwa-register/react';
 
 const ServiceWorkerUpdate = () => {
   const [showReload, setShowReload] = useState(false);
@@ -19,7 +14,7 @@ const ServiceWorkerUpdate = () => {
     onRegisterError(error: Error) {
       console.log('SW registration error', error);
     },
-  } as RegisterSWOptions);
+  });
 
   useEffect(() => {
     setShowReload(needRefresh);
