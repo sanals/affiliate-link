@@ -29,19 +29,38 @@ if (isProd && isNotIframe && 'serviceWorker' in navigator) {
       // Allow time for unregistration to complete
       setTimeout(async () => {
         try {
-          // Register the service worker with correct path
-          const swUrl = `${window.location.origin}/sw.js`;
+          // Determine the correct path for the service worker
+          // For custom domain, use '/sw.js'
+          // For GitHub Pages with repo name in the path, use '/repo-name/sw.js'
+          let swPath = '/sw.js';
+          
+          // Check if we're on GitHub Pages and not a custom domain
+          if (window.location.hostname.includes('github.io')) {
+            // Extract the repository name from the path
+            const pathSegments = window.location.pathname.split('/');
+            if (pathSegments.length > 1 && pathSegments[1]) {
+              swPath = `/${pathSegments[1]}${swPath}`;
+            }
+          }
+          
+          // Use the full origin plus the determined path
+          const swUrl = `${window.location.origin}${swPath}`;
+          console.log('Registering ServiceWorker from:', swUrl);
+          
           const registration = await navigator.serviceWorker.register(swUrl, {
-            scope: '/'
+            scope: window.location.pathname.endsWith('/') 
+              ? window.location.pathname 
+              : window.location.pathname + '/'
           });
           
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          console.log('ServiceWorker registration successful with scope:', registration.scope);
         } catch (error) {
-          console.error('ServiceWorker delayed registration failed: ', error);
+          console.error('ServiceWorker registration failed:', error);
+          console.error('Error details:', error instanceof Error ? error.message : String(error));
         }
       }, 1000);
     } catch (error) {
-      console.error('ServiceWorker unregistration/registration failed: ', error);
+      console.error('ServiceWorker unregistration/registration failed:', error);
     }
   });
 } else if ('serviceWorker' in navigator) {

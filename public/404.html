@@ -1,41 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
-  <script type="text/javascript">
+  <meta charset="utf-8">
+  <title>Amazon Affiliate Link Converter</title>
+  <script>
     // Single Page Apps for GitHub Pages
     // MIT License
     // https://github.com/rafgraph/spa-github-pages
     // This script takes the current url and converts the path and query
     // string into just a query string, and then redirects the browser
-    // to the new url with only a query string and hash fragment,
-    // e.g. https://www.foo.tld/one/two?a=b&c=d#qwe, becomes
-    // https://www.foo.tld/?/one/two&a=b~and~c=d#qwe
-    // Note: this 404.html file must be at least 512 bytes for it to work
-    // with Internet Explorer (it is currently > 512 bytes)
-
-    // If you're creating a Project Pages site and NOT using a custom domain,
-    // then set pathSegmentsToKeep to 1 (enterprise users may need to set it to > 1).
-    // This way the code will only replace the route part of the path, and not
-    // the real directory in which the app resides, for example:
-    // https://username.github.io/repo-name/one/two?a=b&c=d#qwe becomes
-    // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
-    // Otherwise, leave pathSegmentsToKeep as 0.
-    var pathSegmentsToKeep = 0;
+    // to the new url with only a query string and hash fragment
+    
+    // If the current URL contains a base path, we need to handle that correctly
+    var pathSegmentsToKeep = 0; // Default for custom domain
+    var repoName = 'affiliate-link';
+    
+    // Check if we're on GitHub Pages but not on a custom domain
+    if (window.location.hostname.indexOf('github.io') !== -1) {
+      pathSegmentsToKeep = 1; // Keep the repo name segment for GitHub Pages
+    }
 
     var l = window.location;
-    l.replace(
-      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
-    );
+    var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '');
+    var path = l.pathname.split('/');
+    for (var i = 0; i < pathSegmentsToKeep + 1; i++) {
+      if (path[i] !== '') {
+        newUrl += '/' + path[i];
+      }
+    }
+    
+    newUrl += '/?/' + path.slice(pathSegmentsToKeep + 1).join('/') + 
+      (l.search ? '&' + l.search.slice(1) : '') + l.hash;
+
+    // Log the redirection process (for debugging)
+    console.log('Original URL:', l.href);
+    console.log('Redirecting to:', newUrl);
+    
+    window.location.replace(newUrl);
   </script>
 </head>
 <body>
-  <p>Redirecting to the home page...</p>
+  <h1>Redirecting...</h1>
+  <p>If you are not redirected automatically, please click <a id="redirect-link" href="/">here</a>.</p>
+  <script>
+    // Update the fallback link with the correct redirect URL
+    document.getElementById('redirect-link').href = window.location.protocol + '//' + 
+      window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/';
+  </script>
 </body>
 </html> 

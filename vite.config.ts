@@ -4,6 +4,57 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
+import fs from 'fs';
+import path from 'path';
+
+// Custom plugin to copy files that are critical for the PWA
+const ensurePwaAssets = () => {
+  return {
+    name: 'ensure-pwa-assets',
+    closeBundle: () => {
+      const distDir = path.resolve(__dirname, 'dist');
+      
+      // Ensure icons directory exists
+      const publicIconsDir = path.resolve(__dirname, 'public/icons');
+      const distIconsDir = path.resolve(distDir, 'icons');
+      
+      if (!fs.existsSync(distIconsDir)) {
+        fs.mkdirSync(distIconsDir, { recursive: true });
+        console.log('Created icons directory in dist/');
+      }
+      
+      // Copy all icon files
+      if (fs.existsSync(publicIconsDir)) {
+        const iconFiles = fs.readdirSync(publicIconsDir);
+        iconFiles.forEach(file => {
+          const srcPath = path.join(publicIconsDir, file);
+          const destPath = path.join(distIconsDir, file);
+          
+          if (fs.statSync(srcPath).isFile()) {
+            fs.copyFileSync(srcPath, destPath);
+            console.log(`Copied icon: ${file}`);
+          }
+        });
+      }
+      
+      // Create .nojekyll file
+      fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
+      console.log('Created .nojekyll file');
+      
+      // Create or copy CNAME file
+      const cnameSrc = path.resolve(__dirname, 'CNAME');
+      const cnameDest = path.join(distDir, 'CNAME');
+      
+      if (fs.existsSync(cnameSrc)) {
+        fs.copyFileSync(cnameSrc, cnameDest);
+        console.log('Copied CNAME file');
+      } else {
+        fs.writeFileSync(cnameDest, 'syrez.co.in');
+        console.log('Created CNAME file with syrez.co.in');
+      }
+    }
+  };
+};
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,6 +80,7 @@ export default defineConfig({
         'icons/icon-192x192.png',
         'icons/icon-512x512.png',
         'icons/icon-1024x1024.png',
+        '404.html',
         'CNAME'
       ],
       manifest: {
@@ -91,9 +143,10 @@ export default defineConfig({
           }
         ]
       }
-    })
+    }),
+    ensurePwaAssets() // Add our custom plugin to ensure assets are copied
   ],
-  base: '/', // Changed for custom domain deployment
+  base: '/', // For custom domain deployment
   server: {
     host: '127.0.0.1',  // Use IP instead of localhost
     port: 3000,
@@ -107,7 +160,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false, // Disable source maps in production for better performance
+    sourcemap: true, // Enable source maps for debugging
     assetsInlineLimit: 4096, // Files smaller than this will be inlined as base64
     emptyOutDir: true, // Empty the output directory before building
     copyPublicDir: true, // Copy all files from public/ to outDir/
@@ -122,7 +175,7 @@ export default defineConfig({
     minify: 'terser', // Better minification
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console logs in production
+        drop_console: false, // Keep console logs for troubleshooting
         drop_debugger: true
       }
     }

@@ -1,106 +1,106 @@
-// Script to help diagnose domain issues
+// This script helps debug deployment and domain issues
+// It runs automatically when the app loads and outputs diagnostic information to the console
+
 (function() {
-  const report = {
-    url: window.location.href,
-    hostname: window.location.hostname,
-    protocol: window.location.protocol,
-    pathname: window.location.pathname,
-    search: window.location.search,
-    hash: window.location.hash,
-    userAgent: navigator.userAgent,
-    supportsFetch: 'fetch' in window,
-    supportsServiceWorker: 'serviceWorker' in navigator,
-    serviceWorkerRegistration: null,
-    resources: {
-      loaded: [],
-      failed: []
-    }
-  };
-
-  // Check service worker registration
-  if (report.supportsServiceWorker) {
-    navigator.serviceWorker.getRegistrations()
-      .then(registrations => {
-        report.serviceWorkerRegistration = registrations.map(reg => ({
-          scope: reg.scope,
-          state: reg.active ? 'active' : reg.installing ? 'installing' : reg.waiting ? 'waiting' : 'unknown'
-        }));
-        updateConsoleOutput();
-      })
-      .catch(error => {
-        report.serviceWorkerError = error.message;
-        updateConsoleOutput();
-      });
-  }
-
-  // Check resource loading
-  const resourcesToCheck = [
-    '/favicon.ico',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    '/manifest.json',
-    '/sw.js'
-  ];
-
-  Promise.all(resourcesToCheck.map(resource => {
-    return fetch(resource)
-      .then(response => {
-        if (response.ok) {
-          report.resources.loaded.push(resource);
-        } else {
-          report.resources.failed.push({
-            resource,
-            status: response.status,
-            statusText: response.statusText
-          });
-        }
-        return response;
-      })
-      .catch(error => {
-        report.resources.failed.push({
-          resource,
-          error: error.message
-        });
-      });
-  }))
-  .finally(() => {
-    updateConsoleOutput();
-  });
-
-  function updateConsoleOutput() {
-    console.clear();
-    console.log('%c 🔍 Domain Diagnostics', 'font-size: 16px; font-weight: bold; color: #1976d2;');
-    console.log(report);
+  // Wait for DOM to be ready
+  window.addEventListener('DOMContentLoaded', function() {
+    console.group('📋 Deployment Diagnostics');
     
-    if (report.resources.failed.length > 0) {
-      console.log('%c ❌ Failed Resources:', 'font-size: 14px; font-weight: bold; color: #d32f2f;');
-      console.table(report.resources.failed);
-    } else {
-      console.log('%c ✅ All resources loaded successfully!', 'font-size: 14px; font-weight: bold; color: #388e3c;');
+    // Basic environment info
+    console.log('📍 Current URL:', window.location.href);
+    console.log('📍 Hostname:', window.location.hostname);
+    console.log('📍 Pathname:', window.location.pathname);
+    console.log('📍 Protocol:', window.location.protocol);
+    
+    // Check if running on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    console.log('📍 GitHub Pages:', isGitHubPages ? 'Yes' : 'No');
+    
+    // If custom domain, show info
+    if (!isGitHubPages) {
+      console.log('📍 Running on custom domain: ', window.location.hostname);
     }
-  }
-
-  // Create a button to show diagnostics
-  const button = document.createElement('button');
-  button.textContent = '🔍 Check Domain';
-  button.style.position = 'fixed';
-  button.style.bottom = '20px';
-  button.style.right = '20px';
-  button.style.zIndex = '9999';
-  button.style.padding = '8px 12px';
-  button.style.backgroundColor = '#1976d2';
-  button.style.color = 'white';
-  button.style.border = 'none';
-  button.style.borderRadius = '4px';
-  button.style.cursor = 'pointer';
-  button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-  
-  button.addEventListener('click', () => {
-    updateConsoleOutput();
-    alert('Domain diagnostics have been logged to the console (F12). Please share this information if you need help troubleshooting.');
-  });
-  
-  window.addEventListener('load', () => {
-    document.body.appendChild(button);
+    
+    // Check assets loading
+    console.group('🔍 Asset Loading Check');
+    
+    // Test manifest.json
+    fetch('/manifest.json')
+      .then(response => {
+        console.log('📍 manifest.json:', response.ok ? 'Loaded ✅' : 'Failed ❌', response.status);
+        return response.ok ? response.json() : null;
+      })
+      .then(data => {
+        if (data) {
+          console.log('📍 manifest.json scope:', data.scope);
+          console.log('📍 manifest.json start_url:', data.start_url);
+        }
+      })
+      .catch(err => console.log('📍 manifest.json error:', err));
+    
+    // Test icon loading
+    const iconTest = new Image();
+    iconTest.onload = function() {
+      console.log('📍 Icon test: Loaded ✅');
+    };
+    iconTest.onerror = function() {
+      console.log('📍 Icon test: Failed ❌');
+    };
+    iconTest.src = '/icons/icon-192x192.png';
+    
+    // Test service worker support
+    if ('serviceWorker' in navigator) {
+      console.log('📍 ServiceWorker API: Supported ✅');
+      navigator.serviceWorker.getRegistrations()
+        .then(registrations => {
+          console.log('📍 Active ServiceWorkers:', registrations.length);
+          registrations.forEach((registration, index) => {
+            console.log(`📍 SW #${index+1} scope:`, registration.scope);
+          });
+        })
+        .catch(err => console.log('📍 ServiceWorker check error:', err));
+    } else {
+      console.log('📍 ServiceWorker API: Not supported ❌');
+    }
+    
+    // Check if site is installable
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('📍 Display mode: Standalone (installed) ✅');
+    } else {
+      console.log('📍 Display mode: Browser ℹ️');
+    }
+    
+    // Check if in development mode
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log('📍 Environment: Development ℹ️');
+    } else {
+      console.log('📍 Environment: Production ℹ️');
+    }
+    
+    console.groupEnd(); // Asset Loading Check
+    
+    // Calculate paths that would be used based on current URL
+    console.group('🔧 Path Calculations');
+    
+    // For service worker path
+    let calculatedSwPath = '/sw.js';
+    if (isGitHubPages) {
+      const pathSegments = window.location.pathname.split('/');
+      if (pathSegments.length > 1 && pathSegments[1]) {
+        calculatedSwPath = `/${pathSegments[1]}${calculatedSwPath}`;
+      }
+    }
+    console.log('📍 Calculated SW path:', calculatedSwPath);
+    console.log('📍 Full SW URL would be:', `${window.location.origin}${calculatedSwPath}`);
+    
+    // Calculate scope based on current URL
+    const calculatedScope = window.location.pathname.endsWith('/') 
+        ? window.location.pathname 
+        : window.location.pathname + '/';
+    console.log('📍 Calculated scope:', calculatedScope);
+    
+    console.groupEnd(); // Path Calculations
+    
+    console.groupEnd(); // Deployment Diagnostics
   });
 })(); 

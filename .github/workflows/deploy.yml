@@ -16,7 +16,7 @@ permissions:
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
+  group: "custom-pages-deploy"
   cancel-in-progress: false
 
 jobs:
@@ -41,19 +41,36 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Copy CNAME file
+      - name: Create .nojekyll file
+        run: touch dist/.nojekyll
+
+      - name: Verify output files
         run: |
-          if [ -f "CNAME" ]; then
-            cp CNAME dist/
-            echo "Copied CNAME file to dist/"
-          else
+          echo "Checking contents of dist folder:"
+          ls -la dist/
+          echo "Checking for icon files:"
+          ls -la dist/icons/ || echo "No icons directory found"
+          echo "Checking for manifest.json:"
+          cat dist/manifest.json || echo "No manifest.json found"
+          echo "Checking for 404.html:"
+          cat dist/404.html || echo "No 404.html found"
+          echo "Checking for CNAME:"
+          cat dist/CNAME || echo "No CNAME found"
+
+      - name: Copy CNAME file if not exists
+        run: |
+          if [ ! -f "dist/CNAME" ]; then
             echo "syrez.co.in" > dist/CNAME
             echo "Created CNAME file with syrez.co.in in dist/"
+          else
+            echo "CNAME file already exists in dist/"
           fi
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist  # The folder the action should deploy
           branch: gh-pages  # The branch the action should deploy to
           clean: true  # Automatically remove deleted files from the deploy branch
+          commit-message: "Deploy: ${{ github.event.head_commit.message || 'Manual deployment' }}"

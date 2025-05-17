@@ -6,9 +6,17 @@ on:
       - main  # Set this to your default branch
   workflow_dispatch:
 
+# Ensure this doesn't run at the same time as our custom deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   disable-pages:
     runs-on: ubuntu-latest
+    # This job only runs if we're not using our custom deployment workflow
+    # This prevents conflicts between the two workflows
+    if: ${{ github.event_name != 'workflow_dispatch' || github.run_number == 1 }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -17,6 +25,7 @@ jobs:
         # This is a dummy step to create a marker file 
         # indicating we're using custom deployment
         run: |
+          mkdir -p .github
           touch .github/gh-pages-config
           echo "# Custom GitHub Pages Deployment" > .github/gh-pages-config
           echo "# This site is deployed via a custom workflow" >> .github/gh-pages-config
