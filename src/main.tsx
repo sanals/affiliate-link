@@ -11,48 +11,37 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Only register the service worker in production mode
-// This prevents ServiceWorker conflicts with Vite HMR during development
+// Register service worker only in production AND when not in an iframe
+// This prevents ServiceWorker conflicts
 const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const isNotIframe = window.self === window.top;
 
-if (isProd && 'serviceWorker' in navigator) {
+if (isProd && isNotIframe && 'serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // Unregister any existing service workers first to avoid conflicts
+      // Unregister any existing service workers first
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (let registration of registrations) {
         await registration.unregister();
         console.log('Old ServiceWorker unregistered');
       }
       
-      // Register the service worker with correct path
-      const swUrl = `${window.location.origin}/sw.js`;
-      const registration = await navigator.serviceWorker.register(swUrl, {
-        scope: '/'
-      });
-      
-      console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      
-      // Handle service worker updates
-      registration.onupdatefound = () => {
-        const installingWorker = registration.installing;
-        if (installingWorker) {
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed') {
-              if (navigator.serviceWorker.controller) {
-                // At this point, the updated precached content has been fetched,
-                // but the previous service worker will still serve the older content
-                console.log('New content is available; please refresh.');
-              } else {
-                // At this point, everything has been precached.
-                console.log('Content is cached for offline use.');
-              }
-            }
-          };
+      // Allow time for unregistration to complete
+      setTimeout(async () => {
+        try {
+          // Register the service worker with correct path
+          const swUrl = `${window.location.origin}/sw.js`;
+          const registration = await navigator.serviceWorker.register(swUrl, {
+            scope: '/'
+          });
+          
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        } catch (error) {
+          console.error('ServiceWorker delayed registration failed: ', error);
         }
-      };
+      }, 1000);
     } catch (error) {
-      console.error('ServiceWorker registration failed: ', error);
+      console.error('ServiceWorker unregistration/registration failed: ', error);
     }
   });
 } else if ('serviceWorker' in navigator) {
@@ -60,7 +49,9 @@ if (isProd && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
     for (let registration of registrations) {
       registration.unregister();
-      console.log('ServiceWorker unregistered during development');
+      console.log('ServiceWorker unregistered during development/iframe');
     }
+  }).catch(error => {
+    console.error('Error unregistering service worker:', error);
   });
 }
