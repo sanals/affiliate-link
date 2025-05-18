@@ -1,1 +1,72 @@
-(function(){"use strict";const o="amazon-affiliate-converter-v1",i=["/","/index.html","/manifest.json","/favicon.ico","/favicon.svg","/icons/apple-touch-icon.png","/icons/icon-192x192.png","/icons/icon-512x512.png"];self.addEventListener("install",e=>{e.waitUntil(caches.open(o).then(c=>(console.log("Opened cache"),c.addAll(i))))});const a=e=>{try{const c=new URL(e),n=["http","https"],t=[self.location.hostname,"fonts.googleapis.com","fonts.gstatic.com"];return n.includes(c.protocol.replace(":",""))&&(t.includes(c.hostname)||c.hostname==="localhost")}catch{return!1}};self.addEventListener("fetch",e=>{e.request.method==="GET"&&a(e.request.url)&&e.respondWith(caches.match(e.request).then(c=>{if(c)return c;const n=e.request.clone();return fetch(n).then(t=>{if(!t||t.status!==200||t.type!=="basic"||!a(e.request.url))return t;try{const r=t.clone();return caches.open(o).then(s=>{s.put(e.request,r).catch(l=>console.log("Cache put error:",l))}).catch(s=>console.log("Cache open error:",s)),t}catch(r){return console.error("Service worker cache error:",r),t}}).catch(t=>{console.log("Fetch failed:",t)})}))}),self.addEventListener("activate",e=>{const c=[o];e.waitUntil(caches.keys().then(n=>Promise.all(n.map(t=>{if(c.indexOf(t)===-1)return caches.delete(t)}))))})})();
+const i = "amazon-affiliate-converter-v2", l = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon.svg",
+  "/icons/apple-touch-icon.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png"
+];
+self.addEventListener("install", (t) => {
+  t.waitUntil(
+    caches.open(i).then((e) => (console.log("Opened cache"), e.addAll(l))).then(() => self.skipWaiting())
+    // Activate immediately
+  );
+});
+self.addEventListener("activate", (t) => {
+  t.waitUntil(
+    caches.keys().then((e) => Promise.all(
+      e.filter((s) => s !== i).map((s) => caches.delete(s))
+    )).then(() => self.clients.claim())
+    // Take control of all clients
+  );
+});
+self.addEventListener("fetch", (t) => {
+  t.request.url.includes("share-target") || t.respondWith(
+    caches.match(t.request).then((e) => {
+      if (e)
+        return e;
+      const s = t.request.clone();
+      return fetch(s).then((a) => {
+        if (!a || a.status !== 200 || t.request.method !== "GET")
+          return a;
+        const c = a.clone();
+        return caches.open(i).then((r) => {
+          r.put(t.request, c);
+        }), a;
+      });
+    })
+  );
+});
+self.addEventListener("fetch", (t) => {
+  const e = new URL(t.request.url);
+  if (e.searchParams.has("share-target") || e.pathname.includes("share-target") || e.searchParams.has("text") || e.searchParams.has("url")) {
+    const s = e.searchParams.get("title") || "", a = e.searchParams.get("text") || "", c = e.searchParams.get("url") || "";
+    t.respondWith((async () => {
+      const r = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: !0
+      });
+      if (r.length > 0) {
+        const n = r[0];
+        return await n.focus(), n.postMessage({
+          type: "SHARE_TARGET",
+          title: s,
+          text: a,
+          url: c
+        }), Response.redirect("/?share-success=true");
+      } else {
+        const n = await self.clients.openWindow("/?share-target=true");
+        return n && setTimeout(() => {
+          n.postMessage({
+            type: "SHARE_TARGET",
+            title: s,
+            text: a,
+            url: c
+          });
+        }, 1e3), Response.redirect("/?share-success=true");
+      }
+    })());
+  }
+});

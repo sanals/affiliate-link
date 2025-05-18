@@ -2,7 +2,7 @@
   "name": "Amazon Affiliate Link Converter | Syrez",
   "short_name": "Affiliate Links",
   "description": "Convert Amazon links to your affiliate links with ease - Syrez.co.in",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1976d2",
@@ -47,6 +47,7 @@
   },
   "related_applications": [],
   "prefer_related_applications": false,
+  "capture_links": "existing-client-navigate",
   "scope": "/",
   "categories": ["utilities", "productivity"]
 } 
