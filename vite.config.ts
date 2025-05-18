@@ -10,16 +10,19 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
       strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw.js',
+      registerType: 'prompt',
       injectRegister: 'auto',
+      manifestFilename: 'manifest.json',
       injectManifest: {
         injectionPoint: undefined,
-        rollupFormat: 'iife',
       },
       devOptions: {
         enabled: true, // Enable PWA in development
         navigateFallback: 'index.html',
+        type: 'module',
       },
       includeAssets: [
         'favicon.ico', 
@@ -29,34 +32,9 @@ export default defineConfig({
         'icons/icon-192x192.png',
         'icons/icon-512x512.png'
       ],
-      manifest: {
-        name: 'Amazon Affiliate Link Converter',
-        short_name: 'Affiliate Links',
-        description: 'Convert Amazon links to affiliate links with ease',
-        theme_color: '#1976d2',
-        start_url: '/',
-        display: 'standalone',
-        scope: '/',
-        icons: [
-          {
-            src: '/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
+      manifest: false, // Use our own manifest.json from public folder
       workbox: {
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {

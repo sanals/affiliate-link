@@ -1,6 +1,6 @@
 // public/sw.js
 
-const CACHE_NAME = 'amazon-affiliate-converter-v1';
+const CACHE_NAME = 'amazon-affiliate-converter-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,102 +12,127 @@ const urlsToCache = [
   '/icons/icon-512x512.png'
 ];
 
-// Install a service worker
-self.addEventListener('install', event => {
+// Install event - cache assets
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
+      .then((cache) => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // Activate immediately
   );
 });
 
-// Helper function to check if URL is valid for caching
-const isValidUrl = (url) => {
-  try {
-    const urlObj = new URL(url);
-    // Only cache same-origin and specific cross-origin requests (e.g. fonts)
-    const validSchemes = ['http', 'https'];
-    const validHosts = [self.location.hostname, 'fonts.googleapis.com', 'fonts.gstatic.com'];
-    
-    return (
-      validSchemes.includes(urlObj.protocol.replace(':', '')) &&
-      (validHosts.includes(urlObj.hostname) || urlObj.hostname === 'localhost')
-    );
-  } catch (e) {
-    return false;
-  }
-};
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    })
+    .then(() => self.clients.claim()) // Take control of all clients
+  );
+});
 
-// Cache and return requests
-self.addEventListener('fetch', event => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+// Fetch event - handle network requests
+self.addEventListener('fetch', (event) => {
+  // Don't interfere with share-target requests
+  if (event.request.url.includes('share-target')) {
+    return;
+  }
   
-  // Skip invalid URLs (chrome extensions, etc.)
-  if (!isValidUrl(event.request.url)) return;
-  
+  // Standard cache-first strategy for other resources
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
+      .then((response) => {
+        // Return cached response if available
         if (response) {
           return response;
         }
         
-        // Clone the request because it's a stream and can only be consumed once
+        // Clone the request and fetch from network
         const fetchRequest = event.request.clone();
         
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Skip caching if URL isn't valid
-            if (!isValidUrl(event.request.url)) {
+        return fetch(fetchRequest)
+          .then((response) => {
+            // Don't cache non-successful responses or non-GET requests
+            if (!response || response.status !== 200 || event.request.method !== 'GET') {
               return response;
             }
             
-            try {
-              // Clone the response as it's a stream and can only be consumed once
-              const responseToCache = response.clone();
-
-              caches.open(CACHE_NAME)
-                .then(cache => {
-                  cache.put(event.request, responseToCache)
-                    .catch(err => console.log('Cache put error:', err));
-                })
-                .catch(err => console.log('Cache open error:', err));
-                
-              return response;
-            } catch (error) {
-              console.error('Service worker cache error:', error);
-              return response;
-            }
-          }
-        ).catch(error => {
-          console.log('Fetch failed:', error);
-          // You might want to return a fallback response here
-        });
+            // Clone the response
+            const responseToCache = response.clone();
+            
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                // Cache the fetched resource
+                cache.put(event.request, responseToCache);
+              });
+              
+            return response;
+          });
       })
   );
 });
 
-// Update service worker
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+// Web Share Target handling
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Check if this is a share target request
+  if (url.searchParams.has('share-target') || 
+      url.pathname.includes('share-target') || 
+      url.searchParams.has('text') || 
+      url.searchParams.has('url')) {
+    
+    // Extract the shared data
+    const title = url.searchParams.get('title') || '';
+    const text = url.searchParams.get('text') || '';
+    const sharedUrl = url.searchParams.get('url') || '';
+    
+    // Open the app in a new window or focus an existing one
+    event.respondWith((async () => {
+      // Try to find an existing window
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      });
+      
+      // If we have an existing window, focus it and post a message
+      if (clientList.length > 0) {
+        const client = clientList[0];
+        await client.focus();
+        client.postMessage({
+          type: 'SHARE_TARGET',
+          title,
+          text,
+          url: sharedUrl
+        });
+        
+        return Response.redirect('/?share-success=true');
+      } 
+      // Otherwise, open a new window
+      else {
+        const client = await self.clients.openWindow('/?share-target=true');
+        
+        // Wait a bit for the window to load before sending the message
+        if (client) {
+          setTimeout(() => {
+            client.postMessage({
+              type: 'SHARE_TARGET',
+              title,
+              text,
+              url: sharedUrl
+            });
+          }, 1000);
+        }
+        
+        return Response.redirect('/?share-success=true');
+      }
+    })());
+  }
 });

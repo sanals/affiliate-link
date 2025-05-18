@@ -11,19 +11,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Only register the service worker in production mode
-// This prevents ServiceWorker conflicts with Vite HMR during development
-const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-
-if (isProd && 'serviceWorker' in navigator) {
+// Register the service worker in all environments
+// This is needed for Web Share Target API to work
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // Unregister any existing service workers first to avoid conflicts
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (let registration of registrations) {
-        await registration.unregister();
-      }
-      
       // Register the service worker
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
@@ -49,16 +41,26 @@ if (isProd && 'serviceWorker' in navigator) {
           };
         }
       };
+      
+      // Setup listener for Web Share Target API messages
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SHARE_TARGET') {
+          // Handle shared content here
+          console.log('Received shared content:', event.data);
+          
+          // Store the shared URL in localStorage for the app to use
+          if (event.data.url) {
+            localStorage.setItem('sharedUrl', event.data.url);
+          } else if (event.data.text) {
+            localStorage.setItem('sharedText', event.data.text);
+          }
+          
+          // Reload the page to process the shared content
+          window.location.reload();
+        }
+      });
     } catch (error) {
       console.error('ServiceWorker registration failed: ', error);
-    }
-  });
-} else if ('serviceWorker' in navigator) {
-  // In development mode, unregister any service workers to prevent conflicts
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    for (let registration of registrations) {
-      registration.unregister();
-      console.log('ServiceWorker unregistered during development');
     }
   });
 }
