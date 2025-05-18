@@ -16,6 +16,8 @@ import Footer from './components/Footer';
 const App = () => {
   // Theme state setup
   const [mode, setMode] = useState<PaletteMode>('light');
+  // Initial URL for the link converter (for share targets)
+  const [initialUrl, setInitialUrl] = useState<string>('');
 
   // Initialize theme preference from localStorage
   useEffect(() => {
@@ -26,6 +28,28 @@ const App = () => {
       // Check for system preference
       const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setMode(prefersDarkMode ? 'dark' : 'light');
+    }
+  }, []);
+
+  // Handle Web Share Target API
+  useEffect(() => {
+    // Check if URL contains share target parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedUrl = urlParams.get('url');
+    const sharedText = urlParams.get('text');
+    
+    // If we have a URL or text shared, use it
+    if (sharedUrl) {
+      setInitialUrl(sharedUrl);
+    } else if (sharedText) {
+      // Try to extract a URL from text if possible
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const matches = sharedText.match(urlRegex);
+      if (matches && matches.length > 0) {
+        setInitialUrl(matches[0]);
+      } else {
+        setInitialUrl(sharedText);
+      }
     }
   }, []);
 
@@ -51,7 +75,7 @@ const App = () => {
       >
         <Header toggleTheme={toggleThemeMode} />
         <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
-          <LinkConverterCard />
+          <LinkConverterCard initialUrl={initialUrl} />
         </Container>
         <Footer />
       </Box>

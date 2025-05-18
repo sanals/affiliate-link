@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, 
   TextField, 
@@ -24,11 +24,15 @@ interface NotificationState {
   severity: 'success' | 'error' | 'info';
 }
 
-const LinkConverterCard = () => {
+interface LinkConverterCardProps {
+  initialUrl?: string;
+}
+
+const LinkConverterCard = ({ initialUrl = '' }: LinkConverterCardProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  const [inputUrl, setInputUrl] = useState('');
+  const [inputUrl, setInputUrl] = useState(initialUrl);
   const [affiliateUrl, setAffiliateUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +41,50 @@ const LinkConverterCard = () => {
     message: '',
     severity: 'success',
   });
+
+  // Handle changes to initialUrl prop from share targets
+  useEffect(() => {
+    if (initialUrl) {
+      setInputUrl(initialUrl);
+      // Automatically convert when receiving a shared URL
+      const autoConvert = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+          // First, try to resolve short URL if it's an amzn.to link
+          let urlToConvert = initialUrl.trim();
+          
+          if (urlToConvert.includes('amzn.to/')) {
+            try {
+              urlToConvert = await resolveShortUrl(urlToConvert);
+            } catch (error) {
+              setError('Could not resolve short link. Please expand it manually by opening in your browser first.');
+              setIsLoading(false);
+              return;
+            }
+          }
+          
+          // Now convert the link
+          const result = generateAffiliateLink(urlToConvert);
+          setAffiliateUrl(result);
+          setIsLoading(false);
+          
+          // Show notification for shared links
+          setNotification({
+            open: true,
+            message: 'Link converted successfully!',
+            severity: 'success',
+          });
+        } catch (error) {
+          setError(error instanceof Error ? error.message : 'Failed to convert link');
+          setIsLoading(false);
+        }
+      };
+
+      autoConvert();
+    }
+  }, [initialUrl]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputUrl(e.target.value);
