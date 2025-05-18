@@ -1,0 +1,140 @@
+# React Amazon Affiliate Link Converter PWA - Development Rules
+
+## 1. Project Goal
+Develop a Progressive Web App (PWA) using React, TypeScript, Vite, and Material-UI. The app will allow users to convert Amazon product links into affiliate links by appending a predefined affiliate tag.
+
+## 2. Core Features
+1.  **Link Input:** A text field where users can paste an Amazon product link.
+2.  **Link Conversion:**
+    * A "Convert" button to process the input link.
+    * The affiliate tag to be used is: `syrez-21`.
+    * The app should handle different types of Amazon links:
+        * **Input Validation:** Ensure the input is a string that looks like a URL. Attempt to prepend `https://` if missing for known Amazon domains (`amzn.in`, `www.amazon.in`, `amzn.to`).
+        * **Tag Handling:** Before appending the new tag, any existing `tag=` parameter must be removed from the URL.
+        * **Short links (e.g., `https://amzn.in/d/dKF9QTC`):** The affiliate tag should be added. The result should be like `https://amzn.in/d/dKF9QTC?tag=syrez-21`.
+        * **Full links (e.g., `https://www.amazon.in/PRODUCT_NAME/dp/ASIN?params...`):** Append `&tag=syrez-21` if query parameters exist, or `?tag=syrez-21` if they don't, after cleaning any old tag.
+        * **`amzn.to` links (e.g., `https://amzn.to/SHORTCODE`):**
+            * **Attempt** to resolve the `amzn.to` link to its final, full Amazon URL using a client-side `Workspace` request (e.g., `Workspace(url, { redirect: 'follow', method: 'HEAD' })` and reading `response.url`).
+            * If successful, apply the affiliate tag logic (as above) to this resolved full URL.
+            * If resolution fails (e.g., due to CORS or network error), display an error message to the user suggesting they manually expand the link in their browser and paste the full URL.
+3.  **Display Affiliate Link:** Show the generated affiliate link in a read-only text field or a styled display area.
+4.  **Copy Link:** A "Copy to Clipboard" button for the generated affiliate link.
+5.  **Open Link:** A "Open in Amazon" button that opens the generated affiliate link in a new browser tab.
+6.  **Clear Input/Output:** A "Clear" button to reset the input field, the displayed affiliate link, and any errors.
+
+## 3. Technical Stack & Requirements
+* **Framework/Library:** React (latest stable version)
+* **Build Tool:** Vite
+* **Language:** TypeScript
+* **UI Library:** Material-UI (MUI) for responsive components.
+* **Linting:** ESLint (with appropriate React/TypeScript plugins).
+* **Styling:** Default MUI styling (JSS or Emotion depending on MUI version).
+* **State Management:** React Context API or simple React Hooks (`useState`, `useCallback`).
+* **PWA:**
+    * Must be installable.
+    * Include a `manifest.json` file.
+    * Implement a basic service worker for caching assets (using `vite-plugin-pwa`).
+    * Provide necessary icons for PWA.
+
+## 4. Project Structure ( Vite + React + TS )
+amazon-affiliate-linker/
+├── public/
+│   ├── manifest.json
+│   ├── icons/
+│   │   ├── icon-192x192.png
+│   │   └── icon-512x512.png
+│   └── index.html
+├── src/
+│   ├── App.tsx                   # Main application component, layout
+│   ├── main.tsx                  # Entry point
+│   ├── vite-env.d.ts             # Vite TypeScript environment types
+│   ├── components/
+│   │   └── LinkConverterCard.tsx   # MUI Card containing the form, input, output, buttons
+│   ├── hooks/
+│   │   └── useClipboard.ts         # Custom hook for copy-to-clipboard functionality (optional, navigator.clipboard is fine)
+│   ├── utils/
+│   │   ├── linkConverter.ts      # Contains the core link conversion logic
+│   │   └── urlResolver.ts        # Contains logic to attempt to resolve amzn.to links
+│   ├── assets/                   # Static assets like images/logos if any
+│   └── theme.ts                  # MUI theme customization (optional)
+├── .eslintrc.cjs                 # ESLint configuration (or .json, .js)
+├── package.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts                # Vite configuration, including PWA plugin
+
+## 5. Key Component: `LinkConverterCard.tsx`
+* **State:**
+    * `inputUrl: string`
+    * `affiliateUrl: string`
+    * `error: string | null`
+    * `isLoading: boolean`
+    * `notification: { open: boolean, message: string, severity: 'success' | 'error' | 'info' }`
+* **UI Elements (Material-UI):**
+    * `TextField` for Amazon link input.
+    * `Button` for "Convert Link".
+    * `TextField` (read-only) to display the affiliate link.
+    * Action buttons:
+        * `Button` with icon for "Copy Link"
+        * `Button` with icon for "Open in Amazon"
+        * `Button` for "Clear"
+    * `Snackbar` or `Alert` for notifications.
+* **Functionality:**
+    * Handles user input.
+    * Calls link conversion logic from `utils/`.
+    * Manages loading states and error display.
+
+## 6. Utility Functions
+
+### `linkConverter.ts`
+Must include:
+* `AFFILIATE_TAG` constant set to "syrez-21"
+* `generateAffiliateLink(originalUrl: string)` function that:
+    * Validates input URL
+    * Prepends "https://" if needed
+    * Removes any existing "tag" parameter
+    * Adds the affiliate tag
+
+### `urlResolver.ts`
+Must include:
+* `resolveShortUrl(shortUrl: string)` async function that:
+    * Resolves "amzn.to" links to their full version using fetch with redirect:follow
+    * Handles errors with appropriate error messages
+    * Returns the resolved URL or throws an error
+
+## 7. `PWA Configuration (vite.config.ts and manifest.json)`
+Use vite-plugin-pwa.
+Configure manifest.json with app name (Amazon Affiliate Linker), short name, icons, start URL, display mode (standalone), theme color, background color.
+Service worker strategy: generateSW for caching static assets.
+
+## 8. `Quality Standards`
+Clean, readable, and maintainable TypeScript code.
+Proper error handling and user feedback (MUI Snackbars/Alerts).
+Responsive UI.
+Loading indicators for async operations.
+
+## 9. `ESLint Setup`
+Standard recommended ESLint plugins for Vite, React, TypeScript, accessibility, and hooks.
+
+## 10. `Must Contain Files`
+enforce_file_existence:
+
+"src/App.tsx"
+"src/main.tsx"
+"src/theme.ts"
+"src/components/LinkConverterCard.tsx"
+"src/utils/linkConverter.ts"
+"src/utils/urlResolver.ts"
+"public/manifest.json"
+"vite.config.ts"
+"package.json"
+"tsconfig.json"
+".eslintrc.cjs"
+
+## 11. `Must Contain Folders`
+enforce_folder_existence:
+
+"src/components/"
+"src/utils/"
+"public/"
+"public/icons/"
