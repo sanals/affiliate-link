@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 interface HeaderProps {
   toggleTheme: () => void;
@@ -26,7 +25,15 @@ const Header = ({ toggleTheme }: HeaderProps) => {
       sx={{ backgroundColor: theme.palette.background.paper }}
     >
       <Toolbar>
-        <ShoppingCartIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
+        <img 
+          src="/icons/icon-192x192.png" 
+          alt="Syrez Logo" 
+          style={{ 
+            width: 28, 
+            height: 28, 
+            marginRight: theme.spacing(1)
+          }} 
+        />
         <Typography 
           variant="h6" 
           component={Link}
